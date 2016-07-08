@@ -17,6 +17,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorCompat;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -28,7 +29,6 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -81,10 +81,11 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
     private View mTabletRightBorder;
     private View mPendingUserContentView;
 
-    private int mPrimaryColor;
-    private int mInActiveColor;
-    private int mDarkBackgroundColor;
-    private int mWhiteColor;
+    private Integer mPrimaryColor;
+    private Integer mInActiveColor;
+    private Integer mDarkBackgroundColor;
+    private Integer mWhiteColor;
+    private float mTabAlpha = 0.6f;
 
     private int mScreenWidth;
     private int mTenDp;
@@ -116,6 +117,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
     private boolean mIsDarkTheme;
     private boolean mIgnoreNightMode;
     private boolean mIgnoreShiftingResize;
+    private boolean mIgnoreScalingResize;
 
     private int mCustomActiveTabColor;
 
@@ -143,6 +145,20 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
      */
     public static BottomBar attach(Activity activity, Bundle savedInstanceState) {
         BottomBar bottomBar = new BottomBar(activity);
+        bottomBar.onRestoreInstanceState(savedInstanceState);
+
+        ViewGroup contentView = (ViewGroup) activity.findViewById(android.R.id.content);
+        View oldLayout = contentView.getChildAt(0);
+        contentView.removeView(oldLayout);
+
+        bottomBar.setPendingUserContentView(oldLayout);
+        contentView.addView(bottomBar, 0);
+
+        return bottomBar;
+    }
+
+    public static BottomBar attach(Activity activity, Bundle savedInstanceState, int backgroundColor, int activeIconColor, float alpha) {
+        BottomBar bottomBar = new BottomBar(activity, backgroundColor, activeIconColor, alpha);
         bottomBar.onRestoreInstanceState(savedInstanceState);
 
         ViewGroup contentView = (ViewGroup) activity.findViewById(android.R.id.content);
@@ -490,7 +506,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
     public void useFixedMode() {
         if (mItems != null) {
             throw new UnsupportedOperationException("This BottomBar already has items! " +
-                    "You must call the forceFixedMode() method before specifying any items.");
+                    "You must call the useFixedMode() method before specifying any items.");
         }
 
         mMaxFixedTabCount = -1;
@@ -600,7 +616,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
 
             for (int i = 0; i < mItemContainer.getChildCount(); i++) {
                 View bottomBarTab = mItemContainer.getChildAt(i);
-                ((ImageView) bottomBarTab.findViewById(R.id.bb_bottom_bar_icon))
+                ((AppCompatImageView) bottomBarTab.findViewById(R.id.bb_bottom_bar_icon))
                         .setColorFilter(mWhiteColor);
 
                 if (i == mCurrentTabPosition) {
@@ -654,6 +670,40 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
 
         if (mItems != null && mItems.length > 0) {
             selectTabAtPosition(mCurrentTabPosition, false);
+        }
+    }
+
+    /**
+     * Set a custom color for inactive icons in fixed mode.
+     * <p/>
+     * NOTE: This value is ignored if not in fixed mode.
+     *
+     * @param iconColor a hex color used for icons, such as 0xFF00FF00.
+     */
+    public void setFixedInactiveIconColor(int iconColor) {
+        mInActiveColor = iconColor;
+
+        if (mItems != null && mItems.length > 0) {
+            throw new UnsupportedOperationException("This BottomBar " +
+                    "already has items! You must call setFixedInactiveIconColor() " +
+                    "before setting any items.");
+        }
+    }
+
+    /**
+     * Set a custom color for icons in shifting mode.
+     * <p/>
+     * NOTE: This value is ignored in fixed mode.
+     *
+     * @param iconColor a hex color used for icons, such as 0xFF00FF00.
+     */
+    public void setShiftingIconColor(int iconColor) {
+        mWhiteColor = iconColor;
+
+        if (mItems != null && mItems.length > 0) {
+            throw new UnsupportedOperationException("This BottomBar " +
+                    "already has items! You must call setShiftingIconColor() " +
+                    "before setting any items.");
         }
     }
 
@@ -808,7 +858,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
     }
 
     /**
-     * Don't resize the tabs when selecting a new one, so every tab is the same0 if you have more than three
+     * Don't resize the tabs when selecting a new one, so every tab is the same if you have more than three
      * tabs. The text still displays the scale animation and the icon moves up, but the badass width animation
      * is ignored.
      */
@@ -820,6 +870,20 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
         }
 
         mIgnoreShiftingResize = true;
+    }
+
+    /**
+     * Don't animate the scaling of the text when selecting a new tab. The text still displays the badass width animation,
+     * but the scale animation is ignored.
+     */
+    public void noScalingGoodness() {
+        if (mItems != null) {
+            throw new UnsupportedOperationException("This BottomBar already has items! " +
+                    "You must call noScalingGoodness() before setting the items, preferably " +
+                    "right after attaching it to your layout.");
+        }
+
+        mIgnoreScalingResize = true;
     }
 
     /**
@@ -894,6 +958,14 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
         init(context, null, 0, 0);
     }
 
+    public BottomBar(Context context, int backgroundColor, int activeColor, float alpha) {
+        super(context);
+        mTabAlpha = alpha;
+        mWhiteColor = activeColor;
+        mPrimaryColor = backgroundColor;
+        init(context, null, 0, 0);
+    }
+
     public BottomBar(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs, 0, 0);
@@ -914,9 +986,22 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
         mContext = context;
 
         mDarkBackgroundColor = ContextCompat.getColor(getContext(), R.color.bb_darkBackgroundColor);
-        mWhiteColor = ContextCompat.getColor(getContext(), R.color.white);
-        mPrimaryColor = MiscUtils.getColor(getContext(), R.attr.colorPrimary);
-        mInActiveColor = ContextCompat.getColor(getContext(), R.color.bb_inActiveBottomBarItemColor);
+
+
+        if (mWhiteColor == null) {
+            mWhiteColor = ContextCompat.getColor(getContext(), R.color.white);
+            mPrimaryColor = MiscUtils.getColor(getContext(), R.attr.colorPrimary);
+            mInActiveColor = ContextCompat.getColor(getContext(), R.color.bb_inActiveBottomBarItemColor);
+        }
+
+        //mWhiteColor = ContextCompat.getColor(getContext(), R.color.white);
+        //mPrimaryColor = MiscUtils.getColor(getContext(), R.attr.colorPrimary);
+        //mInActiveColor = ContextCompat.getColor(getContext(), R.color.bb_inActiveBottomBarItemColor);
+
+
+        //mWhiteColor = Color.parseColor("#000000");
+        //mPrimaryColor = Color.parseColor("#555555");
+        //mInActiveColor = Color.parseColor("#ffffff");
 
         mScreenWidth = MiscUtils.getScreenWidth(mContext);
         mTenDp = MiscUtils.dpToPixel(mContext, 10);
@@ -937,6 +1022,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
         mTabletRightBorder = rootView.findViewById(R.id.bb_tablet_right_border);
 
         mUserContentContainer = (ViewGroup) rootView.findViewById(R.id.bb_user_content_container);
+
         mShadowView = rootView.findViewById(R.id.bb_bottom_bar_shadow);
 
         mOuterContainer = (ViewGroup) rootView.findViewById(R.id.bb_bottom_bar_outer_container);
@@ -1067,8 +1153,8 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
         if (v.getTag().equals(TAG_BOTTOM_BAR_VIEW_INACTIVE)) {
             View oldTab = findViewWithTag(TAG_BOTTOM_BAR_VIEW_ACTIVE);
 
-            unselectTab(oldTab, true);
-            selectTab(v, true);
+            unselectTab(oldTab, !mIgnoreScalingResize);
+            selectTab(v, !mIgnoreScalingResize);
 
             shiftingMagic(oldTab, v, true);
         }
@@ -1241,7 +1327,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
             }
 
             View bottomBarTab = View.inflate(mContext, layoutResource, null);
-            ImageView icon = (ImageView) bottomBarTab.findViewById(R.id.bb_bottom_bar_icon);
+            AppCompatImageView icon = (AppCompatImageView) bottomBarTab.findViewById(R.id.bb_bottom_bar_icon);
 
             icon.setImageDrawable(bottomBarItemBase.getIcon(mContext));
 
@@ -1366,7 +1452,12 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
      * Title TextView in order to comply with the Material Design specifications.
      */
     private void updateTitleBottomPadding() {
+        if (mItemContainer == null) {
+            return;
+        }
+
         int childCount = mItemContainer.getChildCount();
+
         for (int i = 0; i < childCount; i++) {
             View tab = mItemContainer.getChildAt(i);
             TextView title = (TextView) tab.findViewById(R.id.bb_bottom_bar_title);
@@ -1388,7 +1479,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
 
     private void selectTab(View tab, boolean animate) {
         tab.setTag(TAG_BOTTOM_BAR_VIEW_ACTIVE);
-        ImageView icon = (ImageView) tab.findViewById(R.id.bb_bottom_bar_icon);
+        AppCompatImageView icon = (AppCompatImageView) tab.findViewById(R.id.bb_bottom_bar_icon);
         TextView title = (TextView) tab.findViewById(R.id.bb_bottom_bar_title);
 
         int tabPosition = findItemPosition(tab);
@@ -1401,6 +1492,8 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
             if (title != null) {
                 title.setTextColor(activeColor);
             }
+        } else {
+            title.setTextColor(mWhiteColor);
         }
 
         if (mIsDarkTheme) {
@@ -1455,7 +1548,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
     private void unselectTab(View tab, boolean animate) {
         tab.setTag(TAG_BOTTOM_BAR_VIEW_INACTIVE);
 
-        ImageView icon = (ImageView) tab.findViewById(R.id.bb_bottom_bar_icon);
+        AppCompatImageView icon = (AppCompatImageView) tab.findViewById(R.id.bb_bottom_bar_icon);
         TextView title = (TextView) tab.findViewById(R.id.bb_bottom_bar_title);
 
         if (!mIsShiftingMode || mIsTabletMode) {
@@ -1469,10 +1562,10 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
 
         if (mIsDarkTheme) {
             if (title != null) {
-                ViewCompat.setAlpha(title, 0.6f);
+                ViewCompat.setAlpha(title, mTabAlpha);
             }
 
-            ViewCompat.setAlpha(icon, 0.6f);
+            ViewCompat.setAlpha(icon, mTabAlpha);
         }
 
         if (title == null) {
@@ -1499,7 +1592,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
             if (mIsShiftingMode) {
                 ViewCompat.animate(icon)
                         .setDuration(ANIMATION_DURATION)
-                        .alpha(0.6f)
+                        .alpha(mTabAlpha)
                         .start();
             }
         } else {
@@ -1509,7 +1602,7 @@ public class BottomBar extends RelativeLayout implements View.OnClickListener, V
                 icon.getPaddingBottom());
 
             if (mIsShiftingMode) {
-                ViewCompat.setAlpha(icon, 0.6f);
+                ViewCompat.setAlpha(icon, mTabAlpha);
                 ViewCompat.setAlpha(title, 0);
             }
         }
