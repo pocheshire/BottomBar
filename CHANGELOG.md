@@ -2,7 +2,23 @@
 
 (or: y u no add shiny new things?!)
 
-### Newest version: 2.0.1
+### 2.0.3
+
+* Fixed a bug in the Badge positioning, causing the Badges to clip when there was many tabs.
+* Fixed a bug where the lower portion of unselected titles were clipped off in fixed mode.
+*  Made changes to Badge restoration logic to fix [445](https://github.com/roughike/BottomBar/issues/445). Credit goes to [@Kevinrob](https://github.com/Kevinrob) for reporting and helping to reproduce the issue.
+
+### 2.0.2
+
+* Now we're animating the color change on tab titles and icons.
+* Fixed a bug where the BottomBar wouldn't hide completely when it was both shy and drawing under navbar.
+* Made possible to inflate the BottomBar programmatically.
+* Made it possible to control whether the shadow is shown or not.
+* Made setItems to be public to allow writing tests without a designated Activity
+* Made setters for allowing setting tab colors, alphas, textappearances and typefaces programmatically.
+* Increased test coverage a little bit.
+
+### 2.0.1
 
 * Fixed a bug where the tab selection listener is set and multiple tabs could be selected at once
 * Fixed a bug where the reselection listener was fired even it shouldn't have.

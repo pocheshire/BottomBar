@@ -3,6 +3,8 @@
 
 ## Version 2.0 released!
 
+[The latest version before that can be found in the v1 branch](https://github.com/roughike/BottomBar/tree/v1)
+
 * Cleaner code and better APIs
 * No more unnecessary stuff or spaghetti mess
 * Now the look, feel and behavior is defined in XML, as it should be
@@ -26,7 +28,7 @@ Your uncle Bob's Galaxy S Mini will probably be supported in the future though.
 ## Gimme that Gradle sweetness, pls?
 
 ```groovy
-compile 'com.roughike:bottom-bar:2.0.1'
+compile 'com.roughike:bottom-bar:2.0.2'
 ```
 
 **Maven:**
@@ -34,7 +36,7 @@ compile 'com.roughike:bottom-bar:2.0.1'
 <dependency>
   <groupId>com.roughike</groupId>
   <artifactId>bottom-bar</artifactId>
-  <version>2.0.1</version>
+  <version>2.0.2</version>
   <type>pom</type>
 </dependency>
 ```
@@ -286,6 +288,8 @@ nearby.removeBadge/();
 
 ## All customization options
 
+**For the BottomBar:**
+
 ```xml
 <com.roughike.bottombar.BottomBar
     android:id="@+id/bottomBar"
@@ -300,7 +304,8 @@ nearby.removeBadge/();
     app:bb_inActiveTabColor="#222222"
     app:bb_activeTabColor="@color/colorPrimary"
     app:bb_titleTextAppearance="@style/MyTextAppearance"
-    app:bb_titleTypeFace="fonts/MySuperDuperFont.ttf" />
+    app:bb_titleTypeFace="fonts/MySuperDuperFont.ttf"
+    app:bb_showShadow="true" />
 ```
 
 <dl>
@@ -318,10 +323,42 @@ nearby.removeBadge/();
     <dd>the color for inactive tabs, that's used in the tab icons and titles.</dd>
     <dt>bb_activeTabColor</dt>
     <dd>the color for active tabs, that's used in the tab icons and titles.</dd>
+    <dt>bb_badgeBackgroundColor</dt>
+    <dd>the background color for any Badges in this BottomBar.</dd>
     <dt>bb_titleTextAppearance</dt>
     <dd>custom textAppearance for the titles</dd>
     <dt>bb_titleTypeFace</dt>
     <dd>path for your custom font file, such as <code>fonts/MySuperDuperFont.ttf</code>. In that case your font path would look like <code>src/main/assets/fonts/MySuperDuperFont.ttf</code>, but you only need to provide <code>fonts/MySuperDuperFont.ttf</code>, as the asset folder will be auto-filled for you.</dd>
+    <dt>bb_showShadow</dt>
+    <dd>controls whether the shadow is shown or hidden, defaults to true.</dd>
+</dl>
+
+**For the tabs:**
+
+```xml
+<tab
+    id="@+id/tab_recents"
+    title="Recents"
+    icon="@drawable/empty_icon"
+    inActiveColor="#00FF00"
+    activeColor="#FF0000"
+    barColorWhenSelected="#FF0000"
+    badgeBackgroundColor="#FF0000" />
+```
+
+<dl>
+    <dt>inActiveColor</dt>
+    <dd>the color for inactive tabs, that's used in the tab icons and titles.</dd>
+    <dt>activeColor</dt>
+    <dd>the color for active tabs, that's used in the tab icons and titles.</dd>
+    <dt>barColorWhenSelected</dt>
+    <dd>the color that the whole BottomBar should be when selected this tab.</dd>
+    <dt>badgeBackgroundColor</dt>
+    <dd>the background color for any Badges in this tab.</dd>
+    <dt></dt>
+    <dd></dd>
+    <dt></dt>
+    <dd></dd>
 </dl>
 
 ## Apps using BottomBar
